@@ -1,0 +1,989 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>来院前セルフチェック</title>
+<style>
+  :root {
+    --bg: #f5ecd2;
+    --surface: #fffdf5;
+    --surface-soft: #efe7cd;
+    --ink: #34362c;
+    --muted: #6e6c5a;
+    --line: #e4d9bc;
+    --accent: #356b43;
+    --accent-deep: #284f32;
+    --warm: #c2942f;
+    --charcoal: #3a3d33;
+    --shadow: 0 18px 44px -24px rgba(58, 61, 51, .38);
+  }
+
+  * { box-sizing: border-box; }
+
+  html { min-height: 100%; background: var(--bg); }
+
+  body {
+    margin: 0;
+    color: var(--ink);
+    font-family: "Hiragino Mincho ProN", "Yu Mincho", "YuMincho", "Noto Serif JP", serif;
+    line-height: 1.85;
+    letter-spacing: .01em;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  button, a { font: inherit; }
+
+  .shell {
+    width: min(100%, 560px);
+    margin: 0 auto;
+    padding: 0 20px 88px;
+  }
+
+  .topbar {
+    position: sticky;
+    top: 0;
+    z-index: 10;
+    background: rgba(244, 241, 234, .92);
+    backdrop-filter: blur(10px);
+    border-bottom: 1px solid var(--line);
+  }
+
+  .topbar-inner {
+    width: min(100%, 560px);
+    margin: 0 auto;
+    padding: 14px 20px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+  }
+
+  .brand {
+    font-size: 13px;
+    font-weight: 600;
+    letter-spacing: .2em;
+    color: var(--accent-deep);
+  }
+
+  .source-label {
+    font-size: 11px;
+    color: var(--muted);
+    white-space: nowrap;
+    letter-spacing: .04em;
+  }
+
+  .hero {
+    padding: 48px 0 30px;
+    text-align: center;
+  }
+
+  .brand-logo {
+    display: block;
+    margin: 0 auto 22px;
+    width: min(64%, 220px);
+    aspect-ratio: 1 / 0.82;
+    object-fit: cover;
+    object-position: center 41%;
+    border-radius: 18px;
+  }
+
+  .brand-logo.small {
+    width: min(40%, 130px);
+    margin-bottom: 14px;
+  }
+
+  .eyebrow, .section-kicker {
+    margin: 0 0 16px;
+    color: var(--warm);
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: .28em;
+  }
+
+  h1, h2, h3, p { margin: 0; }
+
+  h1 {
+    font-size: 25px;
+    line-height: 1.6;
+    font-weight: 600;
+  }
+
+  .lead {
+    margin-top: 18px;
+    color: var(--muted);
+    font-size: 15px;
+  }
+
+  .ornament {
+    width: 40px;
+    height: 1px;
+    background: var(--warm);
+    opacity: .55;
+    margin: 24px auto 0;
+  }
+
+  .note {
+    margin-top: 16px;
+    color: var(--muted);
+    font-size: 12px;
+    letter-spacing: .04em;
+  }
+
+  .primary-action, .secondary-action, .option, .nav-button {
+    border-radius: 999px;
+    min-height: 50px;
+    cursor: pointer;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  .primary-action {
+    width: 100%;
+    margin-top: 28px;
+    border: 0;
+    background: var(--accent-deep);
+    color: #fff;
+    padding: 16px 18px;
+    font-weight: 600;
+    letter-spacing: .1em;
+    box-shadow: var(--shadow);
+  }
+
+  .secondary-action {
+    width: 100%;
+    margin-top: 12px;
+    border: 1px solid var(--line);
+    background: transparent;
+    color: var(--muted);
+    padding: 13px 18px;
+  }
+
+  .status {
+    padding: 52px 18px;
+    text-align: center;
+    color: var(--muted);
+  }
+
+  .progress {
+    height: 3px;
+    background: var(--line);
+    border-radius: 999px;
+    overflow: hidden;
+    margin: 26px 0 22px;
+  }
+
+  .progress span {
+    display: block;
+    height: 100%;
+    width: 0;
+    background: var(--accent);
+    transition: width .4s ease;
+  }
+
+  .panel {
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: 20px;
+    box-shadow: var(--shadow);
+    padding: 26px 22px;
+  }
+
+  .q-count {
+    color: var(--warm);
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: .2em;
+  }
+
+  .q-text {
+    margin-top: 10px;
+    font-size: 19px;
+    line-height: 1.6;
+    font-weight: 600;
+  }
+
+  .options {
+    display: grid;
+    gap: 11px;
+    margin-top: 22px;
+  }
+
+  .option {
+    width: 100%;
+    border: 1.5px solid var(--line);
+    background: #fff;
+    color: var(--ink);
+    padding: 14px 16px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    text-align: left;
+    border-radius: 14px;
+    min-height: 52px;
+    transition: border-color .18s, background .18s;
+  }
+
+  .option[aria-pressed="true"] {
+    border-color: var(--accent);
+    background: var(--surface-soft);
+    font-weight: 600;
+  }
+
+  .check-dot {
+    width: 20px;
+    height: 20px;
+    flex: 0 0 20px;
+    border-radius: 50%;
+    border: 1.5px solid var(--line);
+    display: grid;
+    place-items: center;
+  }
+
+  .option[aria-pressed="true"] .check-dot {
+    border-color: var(--accent);
+    background: var(--accent);
+  }
+
+  .option[aria-pressed="true"] .check-dot::after {
+    content: "";
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background: #fff;
+  }
+
+  .helper {
+    margin-top: 14px;
+    color: var(--muted);
+    font-size: 13px;
+    text-align: center;
+  }
+
+  .nav-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 11px;
+    margin-top: 22px;
+  }
+
+  .nav-button {
+    border: 1px solid var(--line);
+    background: #fff;
+    color: var(--muted);
+    padding: 12px 14px;
+    font-weight: 600;
+  }
+
+  .nav-button.primary {
+    border-color: var(--accent);
+    background: var(--accent);
+    color: #fff;
+  }
+
+  .nav-button:disabled { opacity: .4; cursor: default; }
+
+  .result-head {
+    padding: 34px 0 8px;
+    text-align: center;
+  }
+
+  .result-label {
+    color: var(--warm);
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: .26em;
+  }
+
+  .type-name {
+    margin-top: 12px;
+    font-size: 27px;
+    line-height: 1.45;
+    font-weight: 700;
+  }
+
+  .type-short {
+    margin-top: 12px;
+    color: var(--accent);
+    font-size: 15px;
+  }
+
+  .block {
+    margin-top: 16px;
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: 18px;
+    padding: 22px;
+    box-shadow: var(--shadow);
+  }
+
+  .block h2 {
+    color: var(--accent-deep);
+    font-size: 14px;
+    letter-spacing: .1em;
+    line-height: 1.6;
+    display: flex;
+    align-items: center;
+    gap: 9px;
+  }
+
+  .block h2::before {
+    content: "";
+    width: 16px;
+    height: 2px;
+    background: var(--warm);
+    flex: 0 0 auto;
+  }
+
+  .block p {
+    margin-top: 12px;
+    color: var(--ink);
+    font-size: 14px;
+  }
+
+  .steps {
+    display: grid;
+    gap: 0;
+    margin-top: 8px;
+  }
+
+  .step {
+    display: grid;
+    grid-template-columns: auto 1fr;
+    gap: 14px;
+    align-items: start;
+    padding: 12px 0;
+    position: relative;
+  }
+
+  .step:not(:last-child)::before {
+    content: "";
+    position: absolute;
+    left: 27px;
+    top: 44px;
+    bottom: -2px;
+    width: 2px;
+    background: var(--surface-soft);
+  }
+
+  .step-mark {
+    min-width: 56px;
+    border-radius: 999px;
+    background: var(--accent);
+    color: #fff;
+    padding: 5px 8px;
+    text-align: center;
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: .05em;
+    z-index: 1;
+  }
+
+  .step-body { padding-top: 6px; font-size: 14px; }
+
+  .range-box {
+    margin-top: 6px;
+    padding: 16px;
+    border-radius: 14px;
+    background: var(--surface-soft);
+    text-align: center;
+  }
+
+  .range-number {
+    color: var(--accent-deep);
+    font-size: 30px;
+    font-weight: 700;
+    line-height: 1.3;
+  }
+
+  .range-box p { margin-top: 10px; color: var(--muted); font-size: 13px; }
+
+  .disclaimer {
+    margin-top: 14px;
+    border: 1px dashed #c7d4cc;
+    border-radius: 12px;
+    padding: 13px;
+    color: var(--muted);
+    background: #f7f4ec;
+    font-size: 12px;
+    line-height: 1.7;
+  }
+
+  .menu-list, .ticket-list, .answer-list {
+    display: grid;
+    gap: 12px;
+    margin-top: 16px;
+  }
+
+  .menu-item, .ticket-item, .answer-item {
+    border: 1px solid var(--line);
+    border-radius: 14px;
+    padding: 16px;
+    background: #fff;
+  }
+
+  .menu-top, .ticket-top {
+    display: flex;
+    justify-content: space-between;
+    gap: 12px;
+    align-items: flex-start;
+  }
+
+  .menu-name, .ticket-name {
+    font-weight: 600;
+    line-height: 1.5;
+    font-size: 15px;
+  }
+
+  .menu-item p {
+    margin-top: 9px;
+    font-size: 12.5px;
+    color: var(--muted);
+    line-height: 1.75;
+  }
+
+  .price { text-align: right; white-space: nowrap; }
+
+  .badge {
+    display: inline-block;
+    margin-bottom: 5px;
+    border-radius: 6px;
+    background: var(--warm);
+    color: #fff;
+    padding: 2px 7px;
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: .04em;
+  }
+
+  .was { color: var(--muted); font-size: 11px; text-decoration: line-through; }
+
+  .now { color: var(--accent-deep); font-size: 18px; font-weight: 700; }
+
+  .menu-item .now, .ticket-item .now { color: var(--warm); }
+
+  .price-label, .ticket-note { color: var(--muted); font-size: 11px; }
+
+  .ticket-item.highlight { border-color: var(--accent); background: var(--surface-soft); }
+
+  .answer-label { color: var(--muted); font-size: 12px; }
+
+  .answer-value { margin-top: 4px; font-weight: 600; }
+
+  /* FAQ accordion */
+  .faq-list { margin-top: 14px; display: grid; gap: 10px; }
+
+  .faq-item {
+    border: 1px solid var(--line);
+    border-radius: 14px;
+    background: #fff;
+    overflow: hidden;
+  }
+
+  .faq-q {
+    width: 100%;
+    border: 0;
+    background: transparent;
+    text-align: left;
+    padding: 15px 16px;
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--ink);
+    cursor: pointer;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 12px;
+    line-height: 1.5;
+  }
+
+  .faq-icon {
+    flex: 0 0 auto;
+    width: 20px;
+    height: 20px;
+    position: relative;
+    transition: transform .25s ease;
+  }
+
+  .faq-icon::before, .faq-icon::after {
+    content: "";
+    position: absolute;
+    background: var(--accent);
+    border-radius: 2px;
+  }
+
+  .faq-icon::before { top: 9px; left: 3px; right: 3px; height: 2px; }
+  .faq-icon::after { left: 9px; top: 3px; bottom: 3px; width: 2px; }
+
+  .faq-item[aria-expanded="true"] .faq-icon { transform: rotate(45deg); }
+
+  .faq-a {
+    max-height: 0;
+    overflow: hidden;
+    transition: max-height .3s ease;
+  }
+
+  .faq-a-inner {
+    padding: 0 16px 16px;
+    font-size: 13px;
+    color: var(--muted);
+    line-height: 1.85;
+  }
+
+  @media (min-width: 520px) {
+    .shell { padding-inline: 24px; }
+    .hero { padding-top: 64px; }
+  }
+</style>
+</head>
+<body>
+<header class="topbar">
+  <div class="topbar-inner">
+    <div class="brand" id="brand">SELF CHECK</div>
+    <div class="source-label" id="sourceLabel"></div>
+  </div>
+</header>
+<main class="shell" id="app">
+  <div class="status">読み込み中です</div>
+</main>
+
+<script>
+(() => {
+  const dataUrl = "flow-data.json";
+  const app = document.getElementById("app");
+  const brand = document.getElementById("brand");
+  const sourceLabel = document.getElementById("sourceLabel");
+
+  const state = {
+    data: null,
+    source: "",
+    flow: "",
+    screen: "intro",
+    questionIndex: 0,
+    answers: {}
+  };
+
+  const escapeHtml = (value) => String(value ?? "")
+    .replaceAll("&", "&amp;")
+    .replaceAll("<", "&lt;")
+    .replaceAll(">", "&gt;")
+    .replaceAll('"', "&quot;")
+    .replaceAll("'", "&#039;");
+
+  const yen = (value) => {
+    const rounded = Math.round(Number(value) || 0);
+    return new Intl.NumberFormat("ja-JP", {
+      style: "currency",
+      currency: "JPY",
+      maximumFractionDigits: 0
+    }).format(rounded);
+  };
+
+  const percentLabel = (pct) => `${escapeHtml(pct)}${escapeHtml(state.data.uiText.offSuffix)}`;
+
+  const getSource = (data) => {
+    const params = new URLSearchParams(window.location.search);
+    const source = params.get("source");
+    const allowed = data.sourceDefaults.allowedSources;
+    return allowed.includes(source) ? source : data.sourceDefaults.defaultSource;
+  };
+
+  const questionsForFlow = () => state.flow === "simple"
+    ? state.data.simpleQuestions
+    : state.data.diagnosisQuestions;
+
+  const isAnswered = (question) => {
+    const answer = state.answers[question.id];
+    return Array.isArray(answer) ? answer.length > 0 : Boolean(answer);
+  };
+
+  const isSelected = (question, optionId) => {
+    const answer = state.answers[question.id];
+    return Array.isArray(answer) ? answer.includes(optionId) : answer === optionId;
+  };
+
+  const setAnswer = (question, optionId) => {
+    if (question.type === "multi") {
+      const current = new Set(state.answers[question.id] || []);
+      current.has(optionId) ? current.delete(optionId) : current.add(optionId);
+      state.answers[question.id] = [...current];
+      renderQuestion();
+      return;
+    }
+    state.answers[question.id] = optionId;
+    if (state.questionIndex < questionsForFlow().length - 1) {
+      state.questionIndex += 1;
+      renderQuestion();
+      return;
+    }
+    renderQuestion();
+  };
+
+  const diagnose = () => {
+    const totals = {};
+    state.data.diagnosisQuestions.forEach((question) => {
+      const answer = state.answers[question.id];
+      if (!answer) return;
+      const answerIds = Array.isArray(answer) ? answer : [answer];
+      answerIds.forEach((answerId) => {
+        const option = question.options.find((item) => item.id === answerId);
+        Object.entries(option?.scores || {}).forEach(([typeId, score]) => {
+          totals[typeId] = (totals[typeId] || 0) + score;
+        });
+      });
+    });
+
+    let winner = state.data.typeOrder[0];
+    let winnerScore = -Infinity;
+    state.data.typeOrder.forEach((typeId) => {
+      const score = totals[typeId] || 0;
+      if (score > winnerScore) {
+        winner = typeId;
+        winnerScore = score;
+      }
+    });
+    return winner;
+  };
+
+  const menuById = (id) => state.data.menus.find((menu) => menu.id === id);
+
+  const discountedPrice = (price, pct) => Number(price) * (1 - (Number(pct) || 0) / 100);
+
+  const renderIntro = () => {
+    const source = state.data.sources[state.source];
+    const text = state.data.uiText;
+    const startText = state.flow === "simple" ? text.startSimple : text.startDiagnosis;
+    const totalQuestions = questionsForFlow().length;
+
+    sourceLabel.textContent = source.intro.eyebrow;
+    app.innerHTML = `
+      <section class="hero">
+        <img class="brand-logo" src="logo.png" alt="Re.整骨院">
+        <p class="eyebrow">${escapeHtml(source.intro.eyebrow)}</p>
+        <h1>${escapeHtml(source.intro.headline)}</h1>
+        <p class="lead">${escapeHtml(source.intro.lead)}</p>
+        <div class="ornament"></div>
+        <button class="primary-action" type="button" id="startButton">${escapeHtml(startText)}</button>
+        <p class="note">${escapeHtml(source.intro.note)}</p>
+      </section>
+    `;
+    document.getElementById("startButton").addEventListener("click", () => {
+      state.screen = "question";
+      state.questionIndex = 0;
+      state.answers = {};
+      renderQuestion();
+    });
+  };
+
+  const renderQuestion = () => {
+    const text = state.data.uiText;
+    const questions = questionsForFlow();
+    const question = questions[state.questionIndex];
+    const progress = Math.round((state.questionIndex / questions.length) * 100);
+    const isLast = state.questionIndex === questions.length - 1;
+    const nextText = isLast
+      ? (state.flow === "simple" ? text.completeSimple : text.showResult)
+      : text.next;
+
+    sourceLabel.textContent = state.data.sources[state.source].intro.eyebrow;
+    app.innerHTML = `
+      <div class="progress" aria-hidden="true"><span style="width:${progress}%"></span></div>
+      <section class="panel">
+        <div class="q-count">${escapeHtml(text.questionPrefix)} ${escapeHtml(state.questionIndex + 1)} / ${escapeHtml(questions.length)}</div>
+        <h1 class="q-text">${escapeHtml(question.text)}</h1>
+        <div class="options">
+          ${question.options.map((option) => `
+            <button class="option" type="button" data-option="${escapeHtml(option.id)}" aria-pressed="${isSelected(question, option.id)}">
+              <span class="check-dot" aria-hidden="true"></span>
+              <span>${escapeHtml(option.label)}</span>
+            </button>
+          `).join("")}
+        </div>
+        ${question.type === "multi" ? `<p class="helper">${escapeHtml(text.multiSelectNote)}</p>` : ""}
+        <div class="nav-row">
+          <button class="nav-button" type="button" id="backButton" ${state.questionIndex === 0 ? "disabled" : ""}>${escapeHtml(text.back)}</button>
+          <button class="nav-button primary" type="button" id="nextButton">${escapeHtml(nextText)}</button>
+        </div>
+      </section>
+    `;
+
+    app.querySelectorAll("[data-option]").forEach((button) => {
+      button.addEventListener("click", () => setAnswer(question, button.dataset.option));
+    });
+
+    document.getElementById("backButton").addEventListener("click", () => {
+      if (state.questionIndex > 0) {
+        state.questionIndex -= 1;
+        renderQuestion();
+      }
+    });
+
+    document.getElementById("nextButton").addEventListener("click", () => {
+      if (!isAnswered(question)) {
+        document.getElementById("nextButton").textContent = text.selectPrompt;
+        return;
+      }
+      if (!isLast) {
+        state.questionIndex += 1;
+        renderQuestion();
+        return;
+      }
+      state.screen = state.flow === "simple" ? "simpleResult" : "result";
+      state.flow === "simple" ? renderSimpleResult() : renderDiagnosisResult();
+    });
+  };
+
+  const renderMenuItem = (menu) => {
+    const text = state.data.uiText;
+    const discount = Number(state.data.pricing.initialDiscountPct) || 0;
+    const firstPrice = discountedPrice(menu.price, discount);
+    const priceHtml = discount > 0
+      ? `
+        <div class="price">
+          <span class="badge">${escapeHtml(text.firstVisitBadgePrefix)}${percentLabel(discount)}</span>
+          <div class="was">${escapeHtml(text.regularPrice)} ${yen(menu.price)}</div>
+          <div class="price-label">${escapeHtml(text.firstVisitPrice)}</div>
+          <div class="now">${yen(firstPrice)}</div>
+        </div>
+      `
+      : `
+        <div class="price">
+          <div class="price-label">${escapeHtml(text.regularPrice)}</div>
+          <div class="now">${yen(menu.price)}</div>
+        </div>
+      `;
+
+    return `
+      <article class="menu-item">
+        <div class="menu-top">
+          <div class="menu-name">${escapeHtml(menu.name)}</div>
+          ${priceHtml}
+        </div>
+        <p>${escapeHtml(menu.description)}</p>
+      </article>
+    `;
+  };
+
+  const renderTickets = (type, baseMenu) => {
+    const text = state.data.uiText;
+    return state.data.pricing.tickets.map((ticket) => {
+      const inRange = ticket.sessions >= type.range.min && ticket.sessions <= type.range.max;
+      const unit = discountedPrice(baseMenu.price, ticket.discountPct);
+      const total = unit * ticket.sessions;
+      const regularTotal = baseMenu.price * ticket.sessions;
+      return `
+        <article class="ticket-item ${inRange ? "highlight" : ""}">
+          <div class="ticket-top">
+            <div>
+              <div class="ticket-name">
+                ${escapeHtml(ticket.sessions)}${escapeHtml(text.sessionsSuffix)}
+                ${inRange ? `<span class="badge">${escapeHtml(text.ticketRangeBadge)}</span>` : ""}
+              </div>
+              <div class="ticket-note">${escapeHtml(text.discountLabel)} ${percentLabel(ticket.discountPct)}</div>
+            </div>
+            <div class="price">
+              ${ticket.discountPct > 0 ? `<div class="was">${yen(regularTotal)}</div>` : ""}
+              <div class="now">${yen(total)}</div>
+              <div class="price-label">${escapeHtml(text.taxIncluded)}</div>
+            </div>
+          </div>
+        </article>
+      `;
+    }).join("");
+  };
+
+  const renderFaq = () => {
+    if (!Array.isArray(state.data.faq) || state.data.faq.length === 0) return "";
+    const text = state.data.uiText;
+    const title = state.data.faqTitle || "よくあるご質問";
+    return `
+      <section class="block">
+        <h2>${escapeHtml(title)}</h2>
+        <div class="faq-list">
+          ${state.data.faq.map((item, index) => `
+            <div class="faq-item" data-faq="${index}" aria-expanded="false">
+              <button class="faq-q" type="button">
+                <span>${escapeHtml(item.q)}</span>
+                <span class="faq-icon" aria-hidden="true"></span>
+              </button>
+              <div class="faq-a"><div class="faq-a-inner">${escapeHtml(item.a)}</div></div>
+            </div>
+          `).join("")}
+        </div>
+      </section>
+    `;
+  };
+
+  const bindFaq = () => {
+    app.querySelectorAll(".faq-item").forEach((item) => {
+      const button = item.querySelector(".faq-q");
+      const answer = item.querySelector(".faq-a");
+      button.addEventListener("click", () => {
+        const open = item.getAttribute("aria-expanded") === "true";
+        item.setAttribute("aria-expanded", open ? "false" : "true");
+        answer.style.maxHeight = open ? "0px" : `${answer.scrollHeight}px`;
+      });
+    });
+  };
+
+  const renderDiagnosisResult = () => {
+    const text = state.data.uiText;
+    const type = state.data.types[diagnose()];
+    const menus = type.recommendedMenuIds.map(menuById).filter(Boolean);
+    const baseMenu = menus[0];
+
+    sourceLabel.textContent = state.data.sources[state.source].intro.eyebrow;
+    app.innerHTML = `
+      <section class="result-head">
+        <img class="brand-logo small" src="logo.png" alt="Re.整骨院">
+        <p class="result-label">${escapeHtml(text.resultLabel)}</p>
+        <h1 class="type-name">${escapeHtml(type.name)}</h1>
+        <p class="type-short">${escapeHtml(type.shortText)}</p>
+      </section>
+
+      <section class="block">
+        <h2>${escapeHtml(text.whyTitle)}</h2>
+        <p>${escapeHtml(type.description)}</p>
+      </section>
+
+      <section class="block">
+        <h2>${escapeHtml(text.careTitle)}</h2>
+        <p>${escapeHtml(type.careReason)}</p>
+      </section>
+
+      <section class="block">
+        <h2>${escapeHtml(text.roadmapTitle)}</h2>
+        <div class="steps">
+          ${type.roadmap.map((step, index) => `
+            <div class="step">
+              <div class="step-mark">${escapeHtml(text.stepPrefix)} ${escapeHtml(index + 1)}</div>
+              <div class="step-body">${escapeHtml(step)}</div>
+            </div>
+          `).join("")}
+        </div>
+      </section>
+
+      <section class="block">
+        <h2>${escapeHtml(text.rangeTitle)}</h2>
+        <div class="range-box">
+          <div class="range-number">${escapeHtml(type.range.min)}〜${escapeHtml(type.range.max)}回</div>
+          <p>${escapeHtml(type.rangeText)}</p>
+        </div>
+        <div class="disclaimer">${escapeHtml(state.data.disclaimer)}</div>
+      </section>
+
+      <section class="block">
+        <h2>${escapeHtml(text.menuTitle)}</h2>
+        <div class="menu-list">
+          ${menus.map(renderMenuItem).join("")}
+        </div>
+      </section>
+
+      <section class="block">
+        <h2>${escapeHtml(text.ticketTitle)}</h2>
+        <p>${escapeHtml(text.ticketBaseLabel)}：${escapeHtml(baseMenu.name)}</p>
+        <div class="ticket-list">
+          ${renderTickets(type, baseMenu)}
+        </div>
+        <div class="disclaimer">${escapeHtml(text.ticketNotice)}</div>
+      </section>
+
+      ${renderFaq()}
+
+      <button class="primary-action" type="button" id="reserveButton">${escapeHtml(state.data.reservation.buttonText)}</button>
+      <button class="secondary-action" type="button" id="restartButton">${escapeHtml(text.restart)}</button>
+    `;
+    bindFaq();
+    bindResultButtons();
+  };
+
+  const selectedAnswers = () => {
+    return questionsForFlow().map((question) => {
+      const answer = state.answers[question.id];
+      const answerIds = Array.isArray(answer) ? answer : [answer];
+      const labels = answerIds
+        .map((answerId) => question.options.find((option) => option.id === answerId)?.label)
+        .filter(Boolean);
+      return { question: question.text, answer: labels.join(" / ") };
+    });
+  };
+
+  const renderSimpleResult = () => {
+    const text = state.data.uiText;
+    sourceLabel.textContent = state.data.sources[state.source].intro.eyebrow;
+    app.innerHTML = `
+      <section class="result-head">
+        <img class="brand-logo small" src="logo.png" alt="Re.整骨院">
+        <p class="result-label">${escapeHtml(text.simpleResultLabel)}</p>
+        <h1 class="type-name">${escapeHtml(text.simpleNextTitle)}</h1>
+        <p class="type-short">${escapeHtml(text.simpleNextText)}</p>
+      </section>
+
+      <section class="block">
+        <h2>${escapeHtml(text.selectedAnswersTitle)}</h2>
+        <div class="answer-list">
+          ${selectedAnswers().map((item) => `
+            <div class="answer-item">
+              <div class="answer-label">${escapeHtml(item.question)}</div>
+              <div class="answer-value">${escapeHtml(item.answer)}</div>
+            </div>
+          `).join("")}
+        </div>
+      </section>
+
+      <section class="block">
+        <h2>${escapeHtml(text.simplePlanTitle)}</h2>
+        <p>${escapeHtml(text.simplePlanText)}</p>
+        <div class="disclaimer">${escapeHtml(state.data.disclaimer)}</div>
+      </section>
+
+      ${renderFaq()}
+
+      <button class="primary-action" type="button" id="reserveButton">${escapeHtml(state.data.reservation.buttonText)}</button>
+      <button class="secondary-action" type="button" id="restartButton">${escapeHtml(text.restart)}</button>
+    `;
+    bindFaq();
+    bindResultButtons();
+  };
+
+  const bindResultButtons = () => {
+    document.getElementById("reserveButton").addEventListener("click", () => {
+      const url = state.data.reservation.lineUrl;
+      if (state.data.reservation.openInNewTab) {
+        window.open(url, "_blank", "noopener");
+        return;
+      }
+      window.location.href = url;
+    });
+
+    document.getElementById("restartButton").addEventListener("click", () => {
+      state.screen = "intro";
+      state.questionIndex = 0;
+      state.answers = {};
+      renderIntro();
+    });
+  };
+
+  const boot = async () => {
+    try {
+      const response = await fetch(dataUrl);
+      if (!response.ok) throw new Error("flow-data.json");
+      state.data = await response.json();
+      state.source = getSource(state.data);
+      state.flow = state.data.sources[state.source].flow;
+      brand.textContent = state.data.clinic.kicker;
+      renderIntro();
+    } catch (error) {
+      app.innerHTML = `
+        <div class="status">
+          <strong>読み込みに失敗しました</strong><br>
+          flow-data.json を同じフォルダに置き、Web環境で開いてください。
+        </div>
+      `;
+    }
+  };
+
+  boot();
+})();
+</script>
+</body>
+</html>
